@@ -23,11 +23,11 @@ const DEFAULT_OPTIONS = {
 const createEngine = engineOptions => {
 	let registered = false;
 	let moduleDetectRegEx;
+	let markup;
 
 	engineOptions = {...DEFAULT_OPTIONS, engineOptions};
 
 	const renderFile = (filename, options, cb) => {
-
 		// Defer babel registration until the first request so we can grab the view path.
 		if (!moduleDetectRegEx) {
 			// Path could contain regexp characters so escape it first.
@@ -43,22 +43,21 @@ const createEngine = engineOptions => {
 		if (engineOptions.transformViews && !registered) {
 			// Passing a RegExp to Babel results in an issue on Windows so we'll just
 			// pass the view path.
-			require('@babel/register')(
-				{
-					...engineOptions.babel,
-					only: [].concat(options.settings.views)
-				}
-			);
+			require('@babel/register')({
+				...engineOptions.babel,
+				only: [].concat(options.settings.views)
+			});
+
 			registered = true;
 		}
 
 		try {
-			var markup = engineOptions.doctype;
-			var component = require(filename);
+			let component = require(filename);
 
 			// Transpiled ES6 may export components as { default: Component }
 			component = component.default || component;
-			markup += ReactDOMServer.renderToStaticMarkup(
+
+			markup = engineOptions.doctype + ReactDOMServer.renderToStaticMarkup(
 				// Wrap view with locals context provider
 				React.createElement(
 					LocalsContext.Provider,
